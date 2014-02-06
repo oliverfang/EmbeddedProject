@@ -107,9 +107,9 @@ class mbedMonitor(wx.Frame):
 
 	def updateData(self, event):
 		dataLine = self.mbedSerial.next()
-		print dataLine
+		#print dataLine
 		parsedData = dataLine.split("/")
-		if len(parsedData) == 14:
+		if len(parsedData) == 15:
 			#self.assignData(parsedData)
 			self.xAccVal.SetLabel(parsedData[1])
 			self.yAccVal.SetLabel(parsedData[2])
@@ -127,7 +127,7 @@ class mbedMonitor(wx.Frame):
 
 	def onButton(self, event):
 		# convert identifier
-		serialStr = "x" + str(self.cmdList.GetCurrentSelection()) + "x"
+		serialStr = "@x" + str(self.cmdList.GetCurrentSelection()) + "x"
 		# convert new sampling rate but make sure it is a float
 		try:
 			temp = float(self.cmdVal.GetValue())
@@ -136,7 +136,10 @@ class mbedMonitor(wx.Frame):
 				# "#" is the end of line character
 				serialStr = serialStr + str(int(temp*1000)) + "x#"
 				print serialStr
-				self.mbedSerial.ser.write(serialStr)				
+				# try a couple times
+				for i in range(10):
+					self.mbedSerial.ser.write(serialStr)
+					time.sleep(0.005)
 				self.statusBar.SetStatusText("Sampling...")
 			else:
 				self.statusBar.SetStatusText("Error: sampling period must be >= 0.05.")
