@@ -127,7 +127,7 @@ class mbedMonitor(wx.Frame):
 
 	def onButton(self, event):
 		# convert identifier
-		serialStr = "@x" + str(self.cmdList.GetCurrentSelection()) + "x"
+		serialStr = "@x" + str(self.cmdList.GetCurrentSelection()+1) + "x"
 		# convert new sampling rate but make sure it is a float
 		try:
 			temp = float(self.cmdVal.GetValue())
@@ -137,7 +137,7 @@ class mbedMonitor(wx.Frame):
 				serialStr = serialStr + str(int(temp*1000)) + "x#"
 				print serialStr
 				# try a couple times
-				for i in range(10):
+				for i in range(20):
 					self.mbedSerial.ser.write(serialStr)
 					time.sleep(0.005)
 				self.statusBar.SetStatusText("Sampling...")
