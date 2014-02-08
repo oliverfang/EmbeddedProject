@@ -1,19 +1,22 @@
 import serial
 import wx
 import time
+import datetime
 from mbedSerial import *
+from xivelyFeed import *
 
 class mbedMonitor(wx.Frame):
 
 	# define global variables
+	timeArray = datetime.datetime.utcnow()
 	xAcc = 0.0
 	yAcc = 0.0
 	zAcc = 0.0
 	xMag = 0.0
 	yMag = 0.0
 	zMag = 0.0
-	lightVar = 0.0
-	touchVar = 0.0
+	xLight = 0.0
+	xTouch = 0.0
 	accEn = True
 	magEn = True
 	lightEn = True
@@ -100,8 +103,11 @@ class mbedMonitor(wx.Frame):
 		self.cmdButton = wx.Button(self.mp, id=wx.ID_ANY, label = "Send", size=(100,-1))
 		self.cmdButton.Bind(wx.EVT_BUTTON, self.onButton)
 
-		# Configure mbed serial port
+		# Configure mbed serial port (thread runs in background)
 		self.mbedSerial = SerialData()
+
+		# Create Xively Feed (thread runs in background)
+		self.xively = XivelyFeed()
 		
 		# Define Sizers
 		self.defineSizers()
@@ -112,14 +118,23 @@ class mbedMonitor(wx.Frame):
 
 	def assignData(self, parsedData):
 		# skip first entry
+
+		# collect data from parsedData and keep track of time it was collected
+		self.xTime = datetime.datetime.utcnow()
 		self.xAcc = parsedData[1]
 		self.yAcc = parsedData[2]
 		self.zAcc = parsedData[3]
 		self.xMag = parsedData[4]
 		self.yMag = parsedData[5]
 		self.zMag = parsedData[6]
-		self.lightVar = parsedData[7]
-		self.touchVar = parsedData[8]
+		self.xLight = parsedData[7]
+		self.xTouch = parsedData[8]
+
+		# create data point for xivelyfeed
+		self.xively.collectData([self.xTime, self.xAcc, self.yAcc, self.zAcc,
+			self.xMag, self.yMag, self.zMag, self.xLight, self.xTouch])
+
+		# update disable/enable buttons
 		if parsedData[13] == "1":
 			self.accEn = True
 			self.accButton.SetLabel("Disable")
