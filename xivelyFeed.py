@@ -22,14 +22,15 @@ def sendData():
 		print len(dataPoints)
 		
 		datastream = feed.datastreams
-		xAccStream = datastream[0]
-		yAccStream = datastream[4]
-		zAccStream = datastream[6]
-		xMagStream = datastream[2]
-		yMagStream = datastream[5]
-		zMagStream = datastream[7]
-		xLightStream = datastream[1]
-		xTouchStream = datastream[3]
+		xAccStream = datastream[1]
+		yAccStream = datastream[5]
+		zAccStream = datastream[7]
+		xMagStream = datastream[3]
+		yMagStream = datastream[6]
+		zMagStream = datastream[8]
+		xLightStream = datastream[2]
+		xTouchStream = datastream[4]
+		xADCStream = datastream[0]
 
 		xAccData = []
 		yAccData = []
@@ -39,6 +40,7 @@ def sendData():
 		zMagData = []
 		xLightData = []
 		xTouchData = []
+		xADCData = []
 
 		# create data to send
 		for dp in dataPoints:
@@ -50,6 +52,7 @@ def sendData():
 			zMagData.append(xively.Datapoint(dp[0], dp[6]))
 			xLightData.append(xively.Datapoint(dp[0], dp[7]))
 			xTouchData.append(xively.Datapoint(dp[0], dp[8]))
+			xADCData.append(xively.Datapoint(dp[0], dp[9]))
 			
 		xAccStream.datapoints = xAccData
 		yAccStream.datapoints = yAccData
@@ -59,6 +62,7 @@ def sendData():
 		zMagStream.datapoints = zMagData
 		xLightStream.datapoints = xLightData
 		xTouchStream.datapoints = xTouchData
+		xADCStream.datapoints = xADCData
 
 		# push data to xively feed
 		feed.update()
@@ -66,7 +70,8 @@ def sendData():
 		# reset dataPoints array
 		dataPoints = []
 
-		time.sleep(1.0)
+		# send request every 2.5 seconds
+		time.sleep(2.5)
 
 
 class XivelyFeed(object):

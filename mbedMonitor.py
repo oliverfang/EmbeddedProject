@@ -17,16 +17,18 @@ class mbedMonitor(wx.Frame):
 	zMag = 0.0
 	xLight = 0.0
 	xTouch = 0.0
+	xADC = 0.0
 	accEn = True
 	magEn = True
 	lightEn = True
 	touchEn = True
+	adcEn = True
 	serdev = '/dev/tty.usbmodem412'
 
-	settingList = ["Accelerometer", "Magnetometer", "Light Sensor", "Touch Sensor"]
+	settingList = ["Accelerometer", "Magnetometer", "Light Sensor", "Touch Sensor", "ADC Sensor"]
 
 	def __init__(self, parent):
-		wx.Frame.__init__(self, parent, wx.ID_ANY, "mbed Monitor", size=(700, 250))
+		wx.Frame.__init__(self, parent, wx.ID_ANY, "mbed Monitor", size=(700, 280))
 		# set minimum size
 		self.SetMinSize(self.GetSize())
 		self.SetMaxSize(self.GetSize())
@@ -41,7 +43,7 @@ class mbedMonitor(wx.Frame):
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.updateData, self.timer)
 
-		# Create some static text
+		# Create some UI elements
 
 		# headers
 		self.dataLabel = wx.StaticText(self.mp, -1, "Data", size=(470, -1), style=wx.ALIGN_LEFT)
@@ -96,6 +98,14 @@ class mbedMonitor(wx.Frame):
 		self.touchButton = wx.Button(self.mp, id=wx.ID_ANY, label = "Disable", size=(100,-1))
 		self.touchButton.Bind(wx.EVT_BUTTON, self.enableTouch)
 		
+		# ADC
+		self.adcText = wx.StaticText(self.mp, -1, "ADC sensor: ", size=(120, -1), style=wx.ALIGN_RIGHT)
+		self.adcVal = wx.StaticText(self.mp, -1, "0.0", size=(350, -1), style=wx.ALIGN_LEFT)
+		self.adcRateVal = wx.StaticText(self.mp, -1, "0.0", size=(80, -1), style=wx.ALIGN_LEFT)
+		
+		self.adcButton = wx.Button(self.mp, id=wx.ID_ANY, label = "Disable", size=(100,-1))
+		self.adcButton.Bind(wx.EVT_BUTTON, self.enableADC)
+		
 		# Send settings
 		self.cmdLabel = wx.StaticText(self.mp, -1, "Change Sampling Period: ", size=(170, -1), style=wx.ALIGN_RIGHT)
 		self.cmdList = wx.Choice(self.mp, -1, size=(230, -1), choices=self.settingList)
@@ -129,36 +139,43 @@ class mbedMonitor(wx.Frame):
 		self.zMag = parsedData[6]
 		self.xLight = parsedData[7]
 		self.xTouch = parsedData[8]
+		self.xADC = parsedData[9]
 
 		# create data point for xivelyfeed
 		self.xively.collectData([self.xTime, self.xAcc, self.yAcc, self.zAcc,
-			self.xMag, self.yMag, self.zMag, self.xLight, self.xTouch])
+			self.xMag, self.yMag, self.zMag, self.xLight, self.xTouch, self.xADC])
 
 		# update disable/enable buttons
-		if parsedData[13] == "1":
+		if parsedData[15] == "1":
 			self.accEn = True
 			self.accButton.SetLabel("Disable")
 		else:
 			self.accEn = False
 			self.accButton.SetLabel("Enable")
-		if parsedData[14] == "1":
+		if parsedData[16] == "1":
 			self.magEn = True
 			self.magButton.SetLabel("Disable")
 		else:
 			self.magEn = False
 			self.magButton.SetLabel("Enable")
-		if parsedData[15] == "1":
+		if parsedData[17] == "1":
 			self.lightEn = True
 			self.lightButton.SetLabel("Disable")
 		else:
 			self.lightEn = False
 			self.lightButton.SetLabel("Enable")
-		if parsedData[16] == "1":
+		if parsedData[18] == "1":
 			self.touchEn = True
 			self.touchButton.SetLabel("Disable")
 		else:
 			self.touchEn = False
 			self.touchButton.SetLabel("Enable")	
+		if parsedData[19] == "1":
+			self.adcEn = True
+			self.adcButton.SetLabel("Disable")
+		else:
+			self.adcEn = False
+			self.adcButton.SetLabel("Enable")	
 
 		
 	def updateData(self, event):
@@ -166,7 +183,7 @@ class mbedMonitor(wx.Frame):
 		#print dataLine
 		parsedData = dataLine.split("/")
 		self.assignData(parsedData)
-		if len(parsedData) == 18:
+		if len(parsedData) == 21:
 			#self.assignData(parsedData)
 			self.xAccVal.SetLabel(parsedData[1])
 			self.yAccVal.SetLabel(parsedData[2])
@@ -176,10 +193,12 @@ class mbedMonitor(wx.Frame):
 			self.zMagVal.SetLabel(parsedData[6])
 			self.lightVal.SetLabel(parsedData[7])
 			self.touchVal.SetLabel(parsedData[8])
-			self.accRateVal.SetLabel(parsedData[9])
-			self.magRateVal.SetLabel(parsedData[10])
-			self.lightRateVal.SetLabel(parsedData[11])
-			self.touchRateVal.SetLabel(parsedData[12])
+			self.adcVal.SetLabel(parsedData[9])
+			self.accRateVal.SetLabel(parsedData[10])
+			self.magRateVal.SetLabel(parsedData[11])
+			self.lightRateVal.SetLabel(parsedData[12])
+			self.touchRateVal.SetLabel(parsedData[13])
+			self.adcRateVal.SetLabel(parsedData[14])
 		
 	def onButton(self, event):
 		# convert identifier
@@ -253,6 +272,18 @@ class mbedMonitor(wx.Frame):
 		for i in range(20):
 			self.mbedSerial.ser.write(serialStr)
 			time.sleep(0.005)
+
+	def enableADC(self, event):
+		if self.touchEn:
+			# if enabled, then disable
+			serialStr = "@x5xdddx#"
+		else:
+			# otherwise, enable
+			serialStr = "@x5xeeex#"
+		print serialStr		
+		for i in range(20):
+			self.mbedSerial.ser.write(serialStr)
+			time.sleep(0.005)
 		
 	def defineSizers(self):
 		self.headSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -293,6 +324,12 @@ class mbedMonitor(wx.Frame):
 		self.touchSizer.Add(self.touchRateVal, 0, wx.ALL, 5)
 		self.touchSizer.Add(self.touchButton, 0, wx.ALL, 5)
 
+		self.adcSizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.adcSizer.Add(self.adcText, 0, wx.ALL, 5)
+		self.adcSizer.Add(self.adcVal, 0, wx.ALL, 5)
+		self.adcSizer.Add(self.adcRateVal, 0, wx.ALL, 5)
+		self.adcSizer.Add(self.adcButton, 0, wx.ALL, 5)
+
 		self.cmdSizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.cmdSizer.Add(self.cmdLabel, 0, wx.ALL, 5)
 		self.cmdSizer.Add(self.cmdList, 0, wx.ALL, 5)
@@ -305,6 +342,7 @@ class mbedMonitor(wx.Frame):
 		self.topSizer.Add(self.magSizer)
 		self.topSizer.Add(self.lightSizer)
 		self.topSizer.Add(self.touchSizer)
+		self.topSizer.Add(self.adcSizer)
 		self.topSizer.Add(self.cmdSizer)
 
 		self.mp.SetAutoLayout(True)
