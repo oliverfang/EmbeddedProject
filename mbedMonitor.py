@@ -207,13 +207,15 @@ class mbedMonitor(wx.Frame):
 		try:
 			temp = float(self.cmdVal.GetValue())
 			# make sure that the sampling rate is at least 0.05 (otherwise too low)
-			if temp > 0.06 and temp <= 999:
+			if temp > 0.001 and temp <= 999:
 				# "#" is the end of line character
+				if temp < 0.01:
+					# print an extra 0
+					serialStr = serialStr + "0" 
 				if temp < 0.1:
 					# print an extra 0
-					serialStr = serialStr + "0" + str(int(temp*1000)) + "x#"
-				else:
-					serialStr = serialStr + str(int(temp*1000)) + "x#"
+					serialStr = serialStr + "0" 
+				serialStr = serialStr + str(int(temp*1000)) + "x#"
 				print serialStr
 				# try a couple times
 				for i in range(20):
@@ -221,7 +223,7 @@ class mbedMonitor(wx.Frame):
 					time.sleep(0.005)
 				self.statusBar.SetStatusText("Sampling...")
 			else:
-				self.statusBar.SetStatusText("Error: sampling period must be between 0.06 and 999.")
+				self.statusBar.SetStatusText("Error: sampling period must be between 0.001 and 999.")
 		except ValueError:
 			self.statusBar.SetStatusText("Error: sampling period must be a float.")
 
@@ -274,7 +276,7 @@ class mbedMonitor(wx.Frame):
 			time.sleep(0.005)
 
 	def enableADC(self, event):
-		if self.touchEn:
+		if self.adcEn:
 			# if enabled, then disable
 			serialStr = "@x5xdddx#"
 		else:
