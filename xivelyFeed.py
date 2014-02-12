@@ -22,7 +22,7 @@ def sendData():
 		print len(dataPoints)
 		
 		datastream = feed.datastreams
-		xAccStream = datastream[1]
+		xAccStream = datastream[0]
 		yAccStream = datastream[5]
 		zAccStream = datastream[7]
 		xMagStream = datastream[3]
@@ -30,7 +30,7 @@ def sendData():
 		zMagStream = datastream[8]
 		xLightStream = datastream[2]
 		xTouchStream = datastream[4]
-		xADCStream = datastream[0]
+		xADCStream = datastream[1]
 
 		xAccData = []
 		yAccData = []
